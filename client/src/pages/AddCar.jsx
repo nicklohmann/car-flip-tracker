@@ -4,6 +4,8 @@ import axios from 'axios'
 
 function AddCar() {
   const navigate = useNavigate()
+  const [vinInput, setVinInput] = useState('')
+  const [decoding, setDecoding] = useState(false)
   const [form, setForm] = useState({
     make: '', model: '', year: '', vin: '', mileage: '',
     drivetrain: 'AWD', title_status: 'salvage', damage_type: '',
@@ -15,6 +17,28 @@ function AddCar() {
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  const handleDecodeVin = async () => {
+    if (!vinInput) return
+    setDecoding(true)
+    try {
+      const res = await axios.get(
+        `https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${vinInput}?format=json`
+      )
+      const data = res.data.Results[0]
+      setForm(prev => ({
+        ...prev,
+        vin: vinInput,
+        make: data.Make || '',
+        model: data.Model || '',
+        year: data.ModelYear || '',
+        drivetrain: data.DriveType && data.DriveType.includes('4') ? 'AWD' : 'FWD',
+      }))
+    } catch (err) {
+      alert('Could not decode VIN. Please check it and try again.')
+    }
+    setDecoding(false)
   }
 
   const handleSubmit = e => {
@@ -36,16 +60,27 @@ function AddCar() {
     <div style={{ padding: '20px', maxWidth: '600px' }}>
       <h1>Add New Car</h1>
       <button onClick={() => navigate('/')}>← Back</button>
-      <form onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
 
+      <h3>Decode VIN</h3>
+      <input
+        placeholder="Paste VIN here"
+        value={vinInput}
+        onChange={e => setVinInput(e.target.value)}
+        style={{ width: '300px' }}
+      />
+      <button onClick={handleDecodeVin} disabled={decoding} style={{ marginLeft: '10px' }}>
+        {decoding ? 'Decoding...' : 'Decode VIN'}
+      </button>
+
+      <form onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
         <h3>Car Info</h3>
-        <input name="make" placeholder="Make (e.g. Chevy)" onChange={handleChange} /><br />
-        <input name="model" placeholder="Model (e.g. Equinox)" onChange={handleChange} /><br />
-        <input name="year" placeholder="Year" type="number" onChange={handleChange} /><br />
-        <input name="vin" placeholder="VIN" onChange={handleChange} /><br />
+        <input name="make" placeholder="Make (e.g. Chevy)" value={form.make} onChange={handleChange} /><br />
+        <input name="model" placeholder="Model (e.g. Equinox)" value={form.model} onChange={handleChange} /><br />
+        <input name="year" placeholder="Year" type="number" value={form.year} onChange={handleChange} /><br />
+        <input name="vin" placeholder="VIN" value={form.vin} onChange={handleChange} /><br />
         <input name="mileage" placeholder="Mileage" type="number" onChange={handleChange} /><br />
 
-        <select name="drivetrain" onChange={handleChange}>
+        <select name="drivetrain" value={form.drivetrain} onChange={handleChange}>
           <option value="AWD">AWD</option>
           <option value="FWD">FWD</option>
         </select><br />
