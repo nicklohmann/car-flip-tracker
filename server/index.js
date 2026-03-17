@@ -17,6 +17,10 @@ const pool = new Pool({
 });
 const carsRouter = require('./routes/cars');
 app.use('/api/cars', carsRouter);
+
+const partsRouter = require('./routes/parts');
+app.use('/api/cars', partsRouter);
+
 // Test route
 app.get('/', (req, res) => {
   res.json({ message: 'Car Flip Tracker API is running' });
