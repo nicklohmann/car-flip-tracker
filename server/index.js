@@ -15,7 +15,8 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
 });
-
+const carsRouter = require('./routes/cars');
+app.use('/api/cars', carsRouter);
 // Test route
 app.get('/', (req, res) => {
   res.json({ message: 'Car Flip Tracker API is running' });
