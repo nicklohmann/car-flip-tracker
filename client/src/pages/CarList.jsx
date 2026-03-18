@@ -19,11 +19,12 @@ function CarList() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1 className="page-title">Car Flip <span>Tracker</span></h1>
-        <button className="btn btn-primary" onClick={() => navigate('/add')}>
-          + Add Car
-        </button>
+      <h1 className="page-title">Car Flip <span>Tracker</span></h1>
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <button className="btn btn-ghost" onClick={() => navigate('/dashboard')}>📊 Dashboard</button>
+        <button className="btn btn-primary" onClick={() => navigate('/add')}>+ Add Car</button>
       </div>
+    </div>
 
       {cars.length === 0 ? (
         <div className="empty-state">
