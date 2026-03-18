@@ -43,7 +43,9 @@ router.post('/', async (req, res) => {
       title_status, damage_type, kbb_trade_in, kbb_private,
       iaa_acv, repair_estimate, contingency, labor_hours,
       labor_rate, iaa_fees, tax_reg_insurance, actual_bid, iaa_cost
-    } = req.body;
+    } = req.body
+
+    const toNum = val => val === '' || val === undefined ? null : val
 
     const result = await pool.query(
       `INSERT INTO cars (make, model, year, vin, mileage, drivetrain,
@@ -52,16 +54,16 @@ router.post('/', async (req, res) => {
         labor_rate, iaa_fees, tax_reg_insurance, actual_bid, iaa_cost)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
        RETURNING *`,
-      [make, model, year, vin, mileage, drivetrain,
-       title_status, damage_type, kbb_trade_in, kbb_private,
-       iaa_acv, repair_estimate, contingency, labor_hours,
-       labor_rate, iaa_fees, tax_reg_insurance, actual_bid, iaa_cost]
-    );
-    res.status(201).json(result.rows[0]);
+      [make, model, toNum(year), vin, toNum(mileage), drivetrain,
+       title_status, damage_type, toNum(kbb_trade_in), toNum(kbb_private),
+       toNum(iaa_acv), toNum(repair_estimate), toNum(contingency), toNum(labor_hours),
+       toNum(labor_rate), toNum(iaa_fees), toNum(tax_reg_insurance), toNum(actual_bid), toNum(iaa_cost)]
+    )
+    res.status(201).json(result.rows[0])
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message })
   }
-});
+})
 
 // PATCH update car status
 router.patch('/:id/status', async (req, res) => {
