@@ -93,28 +93,28 @@ function CarDetail() {
     setEstimating(false)
   }
 
-  const handleEditStart = () => {
+const handleEditStart = () => {
   setEditForm({
-    make: car.make || '',
-    model: car.model || '',
-    year: car.year || '',
-    vin: car.vin || '',
-    mileage: car.mileage || '',
-    drivetrain: car.drivetrain || 'AWD',
-    title_status: car.title_status || 'salvage',
-    damage_type: car.damage_type || '',
-    kbb_trade_in: car.kbb_trade_in || '',
-    kbb_private: car.kbb_private || '',
-    iaa_acv: car.iaa_acv || '',
-    repair_estimate: car.repair_estimate || '',
-    contingency: car.contingency || '',
-    labor_hours: car.labor_hours || '',
-    labor_rate: car.labor_rate || '50',
-    iaa_fees: car.iaa_fees || '',
-    tax_reg_insurance: car.tax_reg_insurance || '',
-    actual_bid: car.actual_bid || '',
-    iaa_cost: car.iaa_cost || '',
-    notes: car.notes || ''
+    make: car.make ?? '',
+    model: car.model ?? '',
+    year: car.year ?? '',
+    vin: car.vin ?? '',
+    mileage: car.mileage ?? '',          // ← ?? instead of ||
+    drivetrain: car.drivetrain ?? 'AWD',
+    title_status: car.title_status ?? 'salvage',
+    damage_type: car.damage_type ?? '',
+    kbb_trade_in: car.kbb_trade_in ?? '',
+    kbb_private: car.kbb_private ?? '',
+    iaa_acv: car.iaa_acv ?? '',
+    repair_estimate: car.repair_estimate ?? '',
+    contingency: car.contingency ?? '',
+    labor_hours: car.labor_hours ?? '',
+    labor_rate: car.labor_rate ?? '50',
+    iaa_fees: car.iaa_fees ?? '',
+    tax_reg_insurance: car.tax_reg_insurance ?? '',
+    actual_bid: car.actual_bid ?? '',    // ← this one matters most for Craig
+    iaa_cost: car.iaa_cost ?? '',
+    notes: car.notes ?? ''
   })
   setEditing(true)
 }

@@ -121,6 +121,8 @@ router.put('/:id', async (req, res) => {
       iaa_cost, notes
     } = req.body
 
+    const toNum = val => val === '' || val === undefined ? null : val  // ← ADD THIS
+
     const result = await pool.query(
       `UPDATE cars SET
         make=$1, model=$2, year=$3, vin=$4, mileage=$5,
@@ -130,11 +132,11 @@ router.put('/:id', async (req, res) => {
         labor_rate=$15, iaa_fees=$16, tax_reg_insurance=$17,
         actual_bid=$18, iaa_cost=$19, notes=$20
       WHERE id=$21 RETURNING *`,
-      [make, model, year, vin, mileage, drivetrain,
-       title_status, damage_type, kbb_trade_in, kbb_private,
-       iaa_acv, repair_estimate, contingency, labor_hours,
-       labor_rate, iaa_fees, tax_reg_insurance, actual_bid,
-       iaa_cost, notes, id]
+      [make, model, toNum(year), vin, toNum(mileage), drivetrain,
+       title_status, damage_type, toNum(kbb_trade_in), toNum(kbb_private),
+       toNum(iaa_acv), toNum(repair_estimate), toNum(contingency), toNum(labor_hours),
+       toNum(labor_rate), toNum(iaa_fees), toNum(tax_reg_insurance), toNum(actual_bid),  // ← WRAP ALL NUMERICS
+       toNum(iaa_cost), notes, id]
     )
     res.json(result.rows[0])
   } catch (err) {
