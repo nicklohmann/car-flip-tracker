@@ -6,6 +6,7 @@ import CarList from './pages/CarList.jsx'
 import CarDetail from './pages/CarDetail.jsx'
 import AddCar from './pages/AddCar.jsx'
 import './index.css'
+import './styles.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

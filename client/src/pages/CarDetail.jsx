@@ -60,7 +60,6 @@ function CarDetail() {
       }
       const updatedImages = [...images, ...uploadedUrls]
       setImages(updatedImages)
-      // Save image URLs to the car
       await axios.patch(`http://localhost:5000/api/cars/${id}/images`, { images: updatedImages })
     } catch (err) {
       console.error(err)
@@ -77,9 +76,7 @@ function CarDetail() {
     setEstimating(true)
     try {
       const res = await axios.post('http://localhost:5000/api/ai/estimate', { imageUrls: images })
-      const estimatedParts = res.data.parts
-      // Add each estimated part to the database
-      for (const part of estimatedParts) {
+      for (const part of res.data.parts) {
         const saved = await axios.post(`http://localhost:5000/api/cars/${id}/parts`, {
           part_name: part.part_name,
           vendor: part.vendor,
@@ -94,108 +91,175 @@ function CarDetail() {
     setEstimating(false)
   }
 
-  if (!car) return <p>Loading...</p>
+  if (!car) return <div className="page"><p style={{ color: 'var(--text-dim)' }}>Loading...</p></div>
 
-  const totalPartsCost = parts.reduce((sum, p) => sum + parseFloat(p.cost), 0).toFixed(2)
-  const targetSellPrice = (car.kbb_trade_in * 0.95).toFixed(2)
-  const totalCost = (parseFloat(car.iaa_cost) + parseFloat(totalPartsCost) + parseFloat(car.contingency)).toFixed(2)
-  const estimatedProfit = (targetSellPrice - totalCost).toFixed(2)
-  const donationAmount = (estimatedProfit * 0.35).toFixed(2)
+  const totalPartsCost = parts.reduce((sum, p) => sum + parseFloat(p.cost), 0)
+  const targetSellPrice = car.kbb_trade_in * 0.95
+  const totalCost = parseFloat(car.iaa_cost || 0) + totalPartsCost + parseFloat(car.contingency || 0)
+  const estimatedProfit = targetSellPrice - totalCost
+  const donationAmount = estimatedProfit * 0.35
 
   return (
-    <div style={{ padding: '20px', maxWidth: '600px' }}>
-      <button onClick={() => navigate('/')}>← Back</button>
-      <h1>{car.year} {car.make} {car.model}</h1>
-      <p>VIN: {car.vin} | Miles: {car.mileage} | {car.drivetrain} | {car.title_status}</p>
-      <p>Damage: {car.damage_type}</p>
+    <div className="page">
+      <div className="page-header">
+        <h1 className="page-title">
+          {car.year} {car.make} <span>{car.model}</span>
+        </h1>
+        <button className="btn btn-ghost" onClick={() => navigate('/')}>← Back</button>
+      </div>
 
-      <h3>Status</h3>
-      <select value={car.status} onChange={e => handleStatusChange(e.target.value)}>
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '24px' }}>
+        <span className={`badge badge-${car.status}`}>{car.status}</span>
+        <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>
+          {car.vin} &nbsp;·&nbsp; {car.mileage?.toLocaleString()} mi &nbsp;·&nbsp; {car.drivetrain} &nbsp;·&nbsp; {car.title_status} &nbsp;·&nbsp; {car.damage_type}
+        </span>
+      </div>
+
+      {/* Status */}
+      <p className="section-title">Status</p>
+      <select
+        className="form-select"
+        style={{ width: 'auto' }}
+        value={car.status}
+        onChange={e => handleStatusChange(e.target.value)}
+      >
         <option value="evaluating">Evaluating</option>
         <option value="active">Active</option>
         <option value="sold">Sold</option>
         <option value="passed">Passed</option>
       </select>
 
-      <h3>Financials</h3>
-      <p>KBB Trade-In: <strong>${car.kbb_trade_in}</strong></p>
-      <p>Target Sell Price (95%): <strong>${targetSellPrice}</strong></p>
-      <p>IAA Cost: <strong>${car.iaa_cost}</strong></p>
-      <p>Contingency: <strong>${car.contingency}</strong></p>
-      <p>Total Parts Cost: <strong>${totalPartsCost}</strong></p>
-      <p>Estimated Total Cost: <strong>${totalCost}</strong></p>
-      <p>Estimated Profit: <strong>${estimatedProfit}</strong></p>
-      <p>Church Donation (35%): <strong>${donationAmount}</strong></p>
-
-      <h3>Photos</h3>
-      <input
-        type="file"
-        accept="image/*"
-        multiple
-        onChange={handleImageUpload}
-        disabled={uploading}
-      />
-      {uploading && <p>Uploading...</p>}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '10px' }}>
-        {images.map((url, i) => (
-          <img key={i} src={url} alt={`car-${i}`} style={{ width: '150px', height: '100px', objectFit: 'cover' }} />
-        ))}
+      {/* Financials */}
+      <p className="section-title">Financials</p>
+      <div className="stats-grid">
+        <div className="stat-box">
+          <div className="stat-label">KBB Trade-In</div>
+          <div className="stat-value">${parseFloat(car.kbb_trade_in || 0).toLocaleString()}</div>
+        </div>
+        <div className="stat-box">
+          <div className="stat-label">Target Sell (95%)</div>
+          <div className="stat-value accent">${targetSellPrice.toLocaleString()}</div>
+        </div>
+        <div className="stat-box">
+          <div className="stat-label">IAA Cost</div>
+          <div className="stat-value">${parseFloat(car.iaa_cost || 0).toLocaleString()}</div>
+        </div>
+        <div className="stat-box">
+          <div className="stat-label">Parts Cost</div>
+          <div className="stat-value">${totalPartsCost.toLocaleString()}</div>
+        </div>
+        <div className="stat-box">
+          <div className="stat-label">Total Cost</div>
+          <div className="stat-value">${totalCost.toLocaleString()}</div>
+        </div>
+        <div className="stat-box">
+          <div className="stat-label">Est. Profit</div>
+          <div className={`stat-value ${estimatedProfit >= 0 ? 'green' : 'red'}`}>
+            ${estimatedProfit.toLocaleString()}
+          </div>
+        </div>
+        <div className="stat-box">
+          <div className="stat-label">Church Donation (35%)</div>
+          <div className="stat-value accent">${donationAmount.toLocaleString()}</div>
+        </div>
       </div>
 
-      {images.length > 0 && (
-        <div style={{ marginTop: '10px' }}>
-          <button onClick={handleEstimate} disabled={estimating}>
-            {estimating ? 'AI is estimating...' : '✨ AI Estimate Parts from Photos'}
+      {/* Photos */}
+      <p className="section-title">Photos</p>
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <label className="file-upload-label">
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageUpload}
+            disabled={uploading}
+            style={{ display: 'none' }}
+          />
+          {uploading ? 'Uploading...' : '↑ Upload Photos'}
+        </label>
+        {images.length > 0 && (
+          <button className="btn btn-ai" onClick={handleEstimate} disabled={estimating}>
+            {estimating ? 'AI is estimating...' : '✨ AI Estimate Parts'}
           </button>
+        )}
+      </div>
+      {images.length > 0 && (
+        <div className="photos-grid">
+          {images.map((url, i) => (
+            <img key={i} src={url} alt={`car-${i}`} />
+          ))}
         </div>
       )}
 
-      <h3>Parts</h3>
-      {parts.length === 0 ? <p>No parts added yet.</p> : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={{ textAlign: 'left' }}>Part</th>
-              <th style={{ textAlign: 'left' }}>Vendor</th>
-              <th style={{ textAlign: 'left' }}>Cost</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {parts.map(part => (
-              <tr key={part.id}>
-                <td>{part.part_name}</td>
-                <td>{part.vendor}</td>
-                <td>${parseFloat(part.cost).toFixed(2)}</td>
-                <td>
-                  <button onClick={() => handleDeletePart(part.id)}>Remove</button>
-                </td>
+      {/* Parts */}
+      <p className="section-title">Parts</p>
+      {parts.length === 0 ? (
+        <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>No parts added yet.</p>
+      ) : (
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <table className="parts-table">
+            <thead>
+              <tr>
+                <th>Part</th>
+                <th>Vendor</th>
+                <th>Cost</th>
+                <th></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {parts.map(part => (
+                <tr key={part.id}>
+                  <td>{part.part_name}</td>
+                  <td style={{ color: 'var(--text-dim)' }}>{part.vendor}</td>
+                  <td className="cost-cell">${parseFloat(part.cost).toFixed(2)}</td>
+                  <td>
+                    <button className="btn btn-danger" onClick={() => handleDeletePart(part.id)}>Remove</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
-      <h3>Add Part</h3>
-      <form onSubmit={handleAddPart}>
-        <input
-          placeholder="Part name"
-          value={newPart.part_name}
-          onChange={e => setNewPart({ ...newPart, part_name: e.target.value })}
-        /><br />
-        <input
-          placeholder="Vendor"
-          value={newPart.vendor}
-          onChange={e => setNewPart({ ...newPart, vendor: e.target.value })}
-        /><br />
-        <input
-          placeholder="Cost"
-          type="number"
-          value={newPart.cost}
-          onChange={e => setNewPart({ ...newPart, cost: e.target.value })}
-        /><br />
-        <button type="submit">Add Part</button>
-      </form>
+      {/* Add Part */}
+      <p className="section-title">Add Part</p>
+      <div className="card">
+        <form onSubmit={handleAddPart}>
+          <div className="form-grid-3">
+            <div className="form-group">
+              <label className="form-label">Part Name</label>
+              <input
+                className="form-input"
+                placeholder="e.g. front bumper"
+                value={newPart.part_name}
+                onChange={e => setNewPart({ ...newPart, part_name: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Vendor</label>
+              <input
+                className="form-input"
+                placeholder="e.g. eBay"
+                value={newPart.vendor}
+                onChange={e => setNewPart({ ...newPart, vendor: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Cost</label>
+              <input
+                className="form-input"
+                placeholder="0.00"
+                type="number"
+                value={newPart.cost}
+                onChange={e => setNewPart({ ...newPart, cost: e.target.value })}
+              />
+            </div>
+          </div>
+          <button type="submit" className="btn btn-primary">Add Part</button>
+        </form>
+      </div>
     </div>
   )
 }
