@@ -5,6 +5,8 @@ import axios from 'axios'
 function CarDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [editing, setEditing] = useState(false)
+  const [editForm, setEditForm] = useState({})
   const [car, setCar] = useState(null)
   const [parts, setParts] = useState([])
   const [newPart, setNewPart] = useState({ part_name: '', vendor: '', cost: '' })
@@ -91,6 +93,43 @@ function CarDetail() {
     setEstimating(false)
   }
 
+  const handleEditStart = () => {
+  setEditForm({
+    make: car.make || '',
+    model: car.model || '',
+    year: car.year || '',
+    vin: car.vin || '',
+    mileage: car.mileage || '',
+    drivetrain: car.drivetrain || 'AWD',
+    title_status: car.title_status || 'salvage',
+    damage_type: car.damage_type || '',
+    kbb_trade_in: car.kbb_trade_in || '',
+    kbb_private: car.kbb_private || '',
+    iaa_acv: car.iaa_acv || '',
+    repair_estimate: car.repair_estimate || '',
+    contingency: car.contingency || '',
+    labor_hours: car.labor_hours || '',
+    labor_rate: car.labor_rate || '50',
+    iaa_fees: car.iaa_fees || '',
+    tax_reg_insurance: car.tax_reg_insurance || '',
+    actual_bid: car.actual_bid || '',
+    iaa_cost: car.iaa_cost || '',
+    notes: car.notes || ''
+  })
+  setEditing(true)
+}
+
+const handleEditSave = async () => {
+  try {
+    const res = await axios.put(`http://localhost:5000/api/cars/${id}`, editForm)
+    setCar(res.data)
+    setEditing(false)
+  } catch (err) {
+    console.error(err)
+    alert('Failed to save changes')
+  }
+}
+
   if (!car) return <div className="page"><p style={{ color: 'var(--text-dim)' }}>Loading...</p></div>
 
   const totalPartsCost = parts.reduce((sum, p) => sum + parseFloat(p.cost), 0)
@@ -99,13 +138,25 @@ function CarDetail() {
   const estimatedProfit = targetSellPrice - totalCost
   const donationAmount = estimatedProfit * 0.35
 
-  return (
+ return (
     <div className="page">
       <div className="page-header">
         <h1 className="page-title">
           {car.year} {car.make} <span>{car.model}</span>
         </h1>
-        <button className="btn btn-ghost" onClick={() => navigate('/')}>← Back</button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {editing ? (
+            <>
+              <button className="btn btn-primary" onClick={handleEditSave}>Save Changes</button>
+              <button className="btn btn-ghost" onClick={() => setEditing(false)}>Cancel</button>
+            </>
+          ) : (
+            <>
+              <button className="btn btn-ghost" onClick={handleEditStart}>Edit</button>
+              <button className="btn btn-ghost" onClick={() => navigate('/')}>← Back</button>
+            </>
+          )}
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '24px' }}>
@@ -114,6 +165,12 @@ function CarDetail() {
           {car.vin} &nbsp;·&nbsp; {car.mileage?.toLocaleString()} mi &nbsp;·&nbsp; {car.drivetrain} &nbsp;·&nbsp; {car.title_status} &nbsp;·&nbsp; {car.damage_type}
         </span>
       </div>
+
+      {car.notes && (
+        <div style={{ marginTop: '8px', padding: '10px 14px', background: 'var(--surface2)', borderRadius: '6px', fontSize: '0.9rem', color: 'var(--text-dim)' }}>
+          📝 {car.notes}
+        </div>
+      )}
 
       {/* Status */}
       <p className="section-title">Status</p>
@@ -163,6 +220,78 @@ function CarDetail() {
           <div className="stat-value accent">${donationAmount.toLocaleString()}</div>
         </div>
       </div>
+
+      {editing && (
+  <>
+    <p className="section-title">Edit Car Info</p>
+    <div className="card">
+      <div className="form-grid">
+        <div className="form-group">
+          <label className="form-label">Make</label>
+          <input className="form-input" value={editForm.make} onChange={e => setEditForm({...editForm, make: e.target.value})} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Model</label>
+          <input className="form-input" value={editForm.model} onChange={e => setEditForm({...editForm, model: e.target.value})} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Year</label>
+          <input className="form-input" type="number" value={editForm.year} onChange={e => setEditForm({...editForm, year: e.target.value})} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Mileage</label>
+          <input className="form-input" type="number" value={editForm.mileage} onChange={e => setEditForm({...editForm, mileage: e.target.value})} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">KBB Trade-In</label>
+          <input className="form-input" type="number" value={editForm.kbb_trade_in} onChange={e => setEditForm({...editForm, kbb_trade_in: e.target.value})} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">KBB Private</label>
+          <input className="form-input" type="number" value={editForm.kbb_private} onChange={e => setEditForm({...editForm, kbb_private: e.target.value})} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Repair Estimate</label>
+          <input className="form-input" type="number" value={editForm.repair_estimate} onChange={e => setEditForm({...editForm, repair_estimate: e.target.value})} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Contingency</label>
+          <input className="form-input" type="number" value={editForm.contingency} onChange={e => setEditForm({...editForm, contingency: e.target.value})} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">IAA Fees</label>
+          <input className="form-input" type="number" value={editForm.iaa_fees} onChange={e => setEditForm({...editForm, iaa_fees: e.target.value})} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Total IAA Cost</label>
+          <input className="form-input" type="number" value={editForm.iaa_cost} onChange={e => setEditForm({...editForm, iaa_cost: e.target.value})} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Actual Bid</label>
+          <input className="form-input" type="number" value={editForm.actual_bid} onChange={e => setEditForm({...editForm, actual_bid: e.target.value})} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Drivetrain</label>
+          <select className="form-select" value={editForm.drivetrain} onChange={e => setEditForm({...editForm, drivetrain: e.target.value})}>
+            <option value="AWD">AWD</option>
+            <option value="FWD">FWD</option>
+          </select>
+        </div>
+      </div>
+      <div className="form-group" style={{ marginTop: '12px' }}>
+        <label className="form-label">Notes</label>
+        <textarea
+          className="form-input"
+          rows={3}
+          value={editForm.notes}
+          onChange={e => setEditForm({...editForm, notes: e.target.value})}
+          placeholder="e.g. ask for hinges, insurance quality..."
+          style={{ resize: 'vertical' }}
+        />
+      </div>
+    </div>
+  </>
+)}
 
       {/* Photos */}
       <p className="section-title">Photos</p>

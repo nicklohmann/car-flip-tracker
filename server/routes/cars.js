@@ -107,4 +107,38 @@ router.patch('/:id/images', async (req, res) => {
   }
 })
 
+// PUT update car
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const {
+      make, model, year, vin, mileage, drivetrain,
+      title_status, damage_type, kbb_trade_in, kbb_private,
+      iaa_acv, repair_estimate, contingency, labor_hours,
+      labor_rate, iaa_fees, tax_reg_insurance, actual_bid,
+      iaa_cost, notes
+    } = req.body
+
+    const result = await pool.query(
+      `UPDATE cars SET
+        make=$1, model=$2, year=$3, vin=$4, mileage=$5,
+        drivetrain=$6, title_status=$7, damage_type=$8,
+        kbb_trade_in=$9, kbb_private=$10, iaa_acv=$11,
+        repair_estimate=$12, contingency=$13, labor_hours=$14,
+        labor_rate=$15, iaa_fees=$16, tax_reg_insurance=$17,
+        actual_bid=$18, iaa_cost=$19, notes=$20
+      WHERE id=$21 RETURNING *`,
+      [make, model, year, vin, mileage, drivetrain,
+       title_status, damage_type, kbb_trade_in, kbb_private,
+       iaa_acv, repair_estimate, contingency, labor_hours,
+       labor_rate, iaa_fees, tax_reg_insurance, actual_bid,
+       iaa_cost, notes, id]
+    )
+    res.json(result.rows[0])
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
 module.exports = router;
