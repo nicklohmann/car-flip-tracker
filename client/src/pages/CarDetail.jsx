@@ -258,18 +258,36 @@ const handleEditSave = async () => {
           <label className="form-label">Contingency</label>
           <input className="form-input" type="number" value={editForm.contingency} onChange={e => setEditForm({...editForm, contingency: e.target.value})} />
         </div>
-        <div className="form-group">
-          <label className="form-label">IAA Fees</label>
-          <input className="form-input" type="number" value={editForm.iaa_fees} onChange={e => setEditForm({...editForm, iaa_fees: e.target.value})} />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Total IAA Cost</label>
-          <input className="form-input" type="number" value={editForm.iaa_cost} onChange={e => setEditForm({...editForm, iaa_cost: e.target.value})} />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Actual Bid</label>
-          <input className="form-input" type="number" value={editForm.actual_bid} onChange={e => setEditForm({...editForm, actual_bid: e.target.value})} />
-        </div>
+  <div className="form-group">
+  <label className="form-label">Actual Bid</label>
+  <input
+    className="form-input"
+    type="number"
+    value={editForm.actual_bid}
+    onChange={e => {
+      const bid = parseFloat(e.target.value) || 0
+      const fees = bid > 0
+        ? Math.round(bid * (75.022 * Math.pow(bid, -0.703)) + 20 + 10)
+        : 0
+      setEditForm({
+        ...editForm,
+        actual_bid: e.target.value,
+        iaa_fees: fees,
+        iaa_cost: bid + fees
+      })
+    }}
+  />
+</div>
+<div className="form-group">
+  <label className="form-label">IAA Fees (auto-calculated)</label>
+  <input className="form-input" type="number" value={editForm.iaa_fees} readOnly
+    style={{ opacity: 0.6, cursor: 'not-allowed' }} />
+</div>
+<div className="form-group">
+  <label className="form-label">Total IAA Cost (auto-calculated)</label>
+  <input className="form-input" type="number" value={editForm.iaa_cost} readOnly
+    style={{ opacity: 0.6, cursor: 'not-allowed' }} />
+</div>
         <div className="form-group">
           <label className="form-label">Drivetrain</label>
           <select className="form-select" value={editForm.drivetrain} onChange={e => setEditForm({...editForm, drivetrain: e.target.value})}>
