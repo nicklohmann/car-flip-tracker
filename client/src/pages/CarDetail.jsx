@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../api'
 
 function CarDetail() {
   const { id } = useParams()
@@ -15,21 +15,21 @@ function CarDetail() {
   const [estimating, setEstimating] = useState(false)
 
   useEffect(() => {
-    axios.get(`http://localhost:5000/api/cars/${id}`)
+    api.get(`/api/cars/${id}`)
       .then(res => {
         setCar(res.data)
         setImages(res.data.images || [])
       })
       .catch(err => console.error(err))
 
-    axios.get(`http://localhost:5000/api/cars/${id}/parts`)
+    api.get(`/api/cars/${id}/parts`)
       .then(res => setParts(res.data))
       .catch(err => console.error(err))
   }, [id])
 
   const handleAddPart = e => {
     e.preventDefault()
-    axios.post(`http://localhost:5000/api/cars/${id}/parts`, newPart)
+    api.post(`/api/cars/${id}/parts`, newPart)
       .then(res => {
         setParts([...parts, res.data])
         setNewPart({ part_name: '', vendor: '', cost: '' })
@@ -38,13 +38,13 @@ function CarDetail() {
   }
 
   const handleDeletePart = (part_id) => {
-    axios.delete(`http://localhost:5000/api/cars/${id}/parts/${part_id}`)
+    api.delete(`/api/cars/${id}/parts/${part_id}`)
       .then(() => setParts(parts.filter(p => p.id !== part_id)))
       .catch(err => console.error(err))
   }
 
   const handleStatusChange = (status) => {
-    axios.patch(`http://localhost:5000/api/cars/${id}/status`, { status })
+    api.patch(`/api/cars/${id}/status`, { status })
       .then(res => setCar(res.data))
       .catch(err => console.error(err))
   }
@@ -57,12 +57,12 @@ function CarDetail() {
       for (const file of files) {
         const formData = new FormData()
         formData.append('image', file)
-        const res = await axios.post('http://localhost:5000/api/images/upload', formData)
+        const res = await api.post('/api/images/upload', formData)
         uploadedUrls.push(res.data.url)
       }
       const updatedImages = [...images, ...uploadedUrls]
       setImages(updatedImages)
-      await axios.patch(`http://localhost:5000/api/cars/${id}/images`, { images: updatedImages })
+      await api.patch(`/api/cars/${id}/images`, { images: updatedImages })
     } catch (err) {
       console.error(err)
       alert('Image upload failed')
@@ -77,9 +77,9 @@ function CarDetail() {
     }
     setEstimating(true)
     try {
-      const res = await axios.post('http://localhost:5000/api/ai/estimate', { imageUrls: images })
+      const res = await api.post('/api/ai/estimate', { imageUrls: images })
       for (const part of res.data.parts) {
-        const saved = await axios.post(`http://localhost:5000/api/cars/${id}/parts`, {
+        const saved = await api.post(`/api/cars/${id}/parts`, {
           part_name: part.part_name,
           vendor: part.vendor,
           cost: part.estimated_cost
@@ -121,7 +121,7 @@ function CarDetail() {
 
 const handleEditSave = async () => {
   try {
-    const res = await axios.put(`http://localhost:5000/api/cars/${id}`, editForm)
+    const res = await api.put(`/api/cars/${id}`, editForm)
     setCar(res.data)
     setEditing(false)
   } catch (err) {

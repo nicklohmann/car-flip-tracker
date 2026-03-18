@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../api'
 
 function CarList() {
   const [cars, setCars] = useState([])
   const navigate = useNavigate()
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/cars')
+    api.get('/api/cars')
       .then(res => setCars(res.data))
       .catch(err => console.error(err))
   }, [])

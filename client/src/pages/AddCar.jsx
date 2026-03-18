@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../api'
 
 function AddCar() {
   const navigate = useNavigate()
@@ -23,7 +23,7 @@ function AddCar() {
     if (!vinInput) return
     setDecoding(true)
     try {
-      const res = await axios.get(
+      const res = await api.get(
         `https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${vinInput}?format=json`
       )
       const data = res.data.Results[0]
@@ -43,7 +43,7 @@ function AddCar() {
 
   const handleSubmit = e => {
     e.preventDefault()
-    axios.post('http://localhost:5000/api/cars', form)
+    api.post('/api/cars', form)
       .then(() => navigate('/'))
       .catch(err => console.error(err))
   }
