@@ -90,4 +90,21 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// PATCH update car images
+router.patch('/:id/images', async (req, res) => {
+  try {
+    console.log('images route hit', req.params.id, req.body)
+    const { id } = req.params
+    const { images } = req.body
+    const result = await pool.query(
+      'UPDATE cars SET images=$1 WHERE id=$2 RETURNING *',
+      [images, id]
+    )
+    res.json(result.rows[0])
+  } catch (err) {
+    console.log('images route error:', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
 module.exports = router;

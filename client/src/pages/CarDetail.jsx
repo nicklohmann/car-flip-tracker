@@ -8,10 +8,16 @@ function CarDetail() {
   const [car, setCar] = useState(null)
   const [parts, setParts] = useState([])
   const [newPart, setNewPart] = useState({ part_name: '', vendor: '', cost: '' })
+  const [images, setImages] = useState([])
+  const [uploading, setUploading] = useState(false)
+  const [estimating, setEstimating] = useState(false)
 
   useEffect(() => {
     axios.get(`http://localhost:5000/api/cars/${id}`)
-      .then(res => setCar(res.data))
+      .then(res => {
+        setCar(res.data)
+        setImages(res.data.images || [])
+      })
       .catch(err => console.error(err))
 
     axios.get(`http://localhost:5000/api/cars/${id}/parts`)
@@ -39,6 +45,53 @@ function CarDetail() {
     axios.patch(`http://localhost:5000/api/cars/${id}/status`, { status })
       .then(res => setCar(res.data))
       .catch(err => console.error(err))
+  }
+
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files)
+    setUploading(true)
+    try {
+      const uploadedUrls = []
+      for (const file of files) {
+        const formData = new FormData()
+        formData.append('image', file)
+        const res = await axios.post('http://localhost:5000/api/images/upload', formData)
+        uploadedUrls.push(res.data.url)
+      }
+      const updatedImages = [...images, ...uploadedUrls]
+      setImages(updatedImages)
+      // Save image URLs to the car
+      await axios.patch(`http://localhost:5000/api/cars/${id}/images`, { images: updatedImages })
+    } catch (err) {
+      console.error(err)
+      alert('Image upload failed')
+    }
+    setUploading(false)
+  }
+
+  const handleEstimate = async () => {
+    if (images.length === 0) {
+      alert('Please upload at least one photo first')
+      return
+    }
+    setEstimating(true)
+    try {
+      const res = await axios.post('http://localhost:5000/api/ai/estimate', { imageUrls: images })
+      const estimatedParts = res.data.parts
+      // Add each estimated part to the database
+      for (const part of estimatedParts) {
+        const saved = await axios.post(`http://localhost:5000/api/cars/${id}/parts`, {
+          part_name: part.part_name,
+          vendor: part.vendor,
+          cost: part.estimated_cost
+        })
+        setParts(prev => [...prev, saved.data])
+      }
+    } catch (err) {
+      console.error(err)
+      alert('AI estimation failed')
+    }
+    setEstimating(false)
   }
 
   if (!car) return <p>Loading...</p>
@@ -73,6 +126,29 @@ function CarDetail() {
       <p>Estimated Total Cost: <strong>${totalCost}</strong></p>
       <p>Estimated Profit: <strong>${estimatedProfit}</strong></p>
       <p>Church Donation (35%): <strong>${donationAmount}</strong></p>
+
+      <h3>Photos</h3>
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleImageUpload}
+        disabled={uploading}
+      />
+      {uploading && <p>Uploading...</p>}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '10px' }}>
+        {images.map((url, i) => (
+          <img key={i} src={url} alt={`car-${i}`} style={{ width: '150px', height: '100px', objectFit: 'cover' }} />
+        ))}
+      </div>
+
+      {images.length > 0 && (
+        <div style={{ marginTop: '10px' }}>
+          <button onClick={handleEstimate} disabled={estimating}>
+            {estimating ? 'AI is estimating...' : '✨ AI Estimate Parts from Photos'}
+          </button>
+        </div>
+      )}
 
       <h3>Parts</h3>
       {parts.length === 0 ? <p>No parts added yet.</p> : (

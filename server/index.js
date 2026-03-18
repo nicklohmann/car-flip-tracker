@@ -21,6 +21,12 @@ app.use('/api/cars', carsRouter);
 const partsRouter = require('./routes/parts');
 app.use('/api/cars', partsRouter);
 
+const imagesRouter = require('./routes/images');
+app.use('/api/images', imagesRouter);
+
+const estimateRouter = require('./routes/estimate');
+app.use('/api/ai', estimateRouter);
+
 // Test route
 app.get('/', (req, res) => {
   res.json({ message: 'Car Flip Tracker API is running' });
