@@ -78,9 +78,10 @@ function CarDetail() {
     setEstimating(false)
   }
 
-  const handleCarPartSearch = () => {
+ const handleCarPartSearch = () => {
+  const query = `${car.year} ${car.make} ${car.model}`
   window.open(
-    `https://www.car-part.com/cgi-bin/search.cgi?action=getPart&searchtype=INTERCHANGE&year=${car.year}&make=${encodeURIComponent(car.make)}&model=${encodeURIComponent(car.model)}`,
+    `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}&_sacat=6030`,
     '_blank'
   )
 }
@@ -233,13 +234,23 @@ function CarDetail() {
             <thead><tr><th>Part</th><th>Vendor</th><th>Cost</th><th></th></tr></thead>
             <tbody>
               {parts.map(part => (
-                <tr key={part.id}>
-                  <td>{part.part_name}</td>
-                  <td style={{ color: 'var(--text-dim)' }}>{part.vendor}</td>
-                  <td className="cost-cell">${parseFloat(part.cost || 0).toFixed(2)}</td>
-                  <td><button className="btn btn-danger" onClick={() => handleDeletePart(part.id)}>Remove</button></td>
-                </tr>
-              ))}
+  <tr key={part.id}>
+    <td>{part.part_name}</td>
+    <td style={{ color: 'var(--text-dim)' }}>{part.vendor}</td>
+    <td className="cost-cell">${parseFloat(part.cost || 0).toFixed(2)}</td>
+    <td style={{ display: 'flex', gap: '6px' }}>
+      <button
+        className="btn btn-ghost"
+        style={{ fontSize: '0.75rem', padding: '2px 8px' }}
+        onClick={() => window.open(
+          `https://www.car-part.com/cgi-bin/search.cgi?action=getPart&searchtype=INTERCHANGE&year=${car.year}&make=${encodeURIComponent(car.make)}&model=${encodeURIComponent(car.model)}&part=${encodeURIComponent(part.part_name)}`,
+          '_blank'
+        )}
+      >🔍</button>
+      <button className="btn btn-danger" onClick={() => handleDeletePart(part.id)}>Remove</button>
+    </td>
+  </tr>
+))}
             </tbody>
           </table>
         </div>
@@ -247,7 +258,7 @@ function CarDetail() {
 
       <p className="section-title">Add Part</p>
       <div style={{ marginBottom: '12px' }}>
-  <button className="btn btn-ghost" onClick={handleCarPartSearch}>🔍 Search car-part.com</button>
+  <button className="btn btn-ghost" onClick={handleCarPartSearch}>🔍  Search eBay Motors</button>
     </div>
 
       <div className="card">
