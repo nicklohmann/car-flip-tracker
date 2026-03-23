@@ -243,9 +243,9 @@ function CarDetail() {
         className="btn btn-ghost"
         style={{ fontSize: '0.75rem', padding: '2px 8px' }}
         onClick={() => window.open(
-          `https://www.car-part.com/cgi-bin/search.cgi?action=getPart&searchtype=INTERCHANGE&year=${car.year}&make=${encodeURIComponent(car.make)}&model=${encodeURIComponent(car.model)}&part=${encodeURIComponent(part.part_name)}`,
-          '_blank'
-        )}
+  `https://www.google.com/search?q=${encodeURIComponent(`${car.year} ${car.make} ${car.model} ${part.part_name}`)}+site:car-part.com`,
+  '_blank'
+)}
       >🔍</button>
       <button className="btn btn-danger" onClick={() => handleDeletePart(part.id)}>Remove</button>
     </td>
