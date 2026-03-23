@@ -2,55 +2,6 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../api'
 
-const PART_TEMPLATES = {
-  'front': [
-    { part_name: 'Front Bumper Cover', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Bumper Support', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Upper Grille', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Hood', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Hood Hinges', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Headlight (driver)', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Headlight (passenger)', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Radiator Support', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Fender', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Paint', vendor: 'TSS', cost: '' },
-    { part_name: 'Transport', vendor: 'U-Haul', cost: '' },
-  ],
-  'side': [
-    { part_name: 'Door (front)', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Door (rear)', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Fender', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Mirror', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Rocker Panel', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Paint', vendor: 'TSS', cost: '' },
-    { part_name: 'Transport', vendor: 'U-Haul', cost: '' },
-  ],
-  'rear': [
-    { part_name: 'Rear Bumper Cover', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Rear Bumper Support', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Trunk Lid', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Tail Light (driver)', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Tail Light (passenger)', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Paint', vendor: 'TSS', cost: '' },
-    { part_name: 'Transport', vendor: 'U-Haul', cost: '' },
-  ],
-  'not running': [
-    { part_name: 'Diagnostic / Tow', vendor: '', cost: '' },
-    { part_name: 'Battery', vendor: 'AutoZone', cost: '' },
-    { part_name: 'Oil Change / Fluids', vendor: 'AutoZone', cost: '' },
-    { part_name: 'Misc Mechanical', vendor: '', cost: '' },
-    { part_name: 'Transport', vendor: 'U-Haul', cost: '' },
-  ],
-  'airbag': [
-    { part_name: 'Airbag Module Reset', vendor: 'Safety Restore', cost: '' },
-    { part_name: 'Seatbelt Repair', vendor: 'Safety Restore', cost: '' },
-    { part_name: 'Clockspring / Connectors', vendor: 'eBay', cost: '' },
-    { part_name: 'Driver Airbag', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Passenger Airbag', vendor: 'car-part.com', cost: '' },
-    { part_name: 'Transport', vendor: 'U-Haul', cost: '' },
-  ],
-}
-
 function CarDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -62,7 +13,6 @@ function CarDetail() {
   const [images, setImages] = useState([])
   const [uploading, setUploading] = useState(false)
   const [estimating, setEstimating] = useState(false)
-  const [loadingTemplate, setLoadingTemplate] = useState(false)
 
   useEffect(() => {
     api.get(`/api/cars/${id}`)
@@ -128,37 +78,12 @@ function CarDetail() {
     setEstimating(false)
   }
 
-  const getTemplateKey = () => {
-    const damage = (car?.damage_type || '').toLowerCase()
-    if (damage.includes('front') || damage.includes('frnt')) return 'front'
-    if (damage.includes('side')) return 'side'
-    if (damage.includes('rear') || damage.includes('back')) return 'rear'
-    if (damage.includes('not running') || damage.includes('mechanical')) return 'not running'
-    if (damage.includes('airbag')) return 'airbag'
-    return null
-  }
-
-  const handleLoadTemplate = async () => {
-    const key = getTemplateKey()
-    if (!key) {
-      alert('No template found for this damage type. Update damage type to: front, side, rear, airbag, or not running.')
-      return
-    }
-    if (!window.confirm(`Load "${key}" template? Adds ${PART_TEMPLATES[key].length} parts with blank costs to fill in.`)) return
-    setLoadingTemplate(true)
-    try {
-      for (const part of PART_TEMPLATES[key]) {
-        const saved = await api.post(`/api/cars/${id}/parts`, part)
-        setParts(prev => [...prev, saved.data])
-      }
-    } catch (err) { console.error(err); alert('Failed to load template') }
-    setLoadingTemplate(false)
-  }
-
   const handleCarPartSearch = () => {
-    const query = `${car.year} ${car.make} ${car.model}`
-    window.open(`https://www.google.com/search?q=site:car-part.com+${encodeURIComponent(query)}`, '_blank')
-  }
+  window.open(
+    `https://www.car-part.com/cgi-bin/search.cgi?action=getPart&searchtype=INTERCHANGE&year=${car.year}&make=${encodeURIComponent(car.make)}&model=${encodeURIComponent(car.model)}`,
+    '_blank'
+  )
+}
 
   const handleEditStart = () => {
     setEditForm({
@@ -189,7 +114,6 @@ function CarDetail() {
   const totalCost = parseFloat(car.iaa_cost || 0) + totalPartsCost + parseFloat(car.contingency || 0)
   const estimatedProfit = targetSellPrice - totalCost
   const donationAmount = estimatedProfit * 0.35
-  const templateKey = getTemplateKey()
 
   return (
     <div className="page">
@@ -322,14 +246,9 @@ function CarDetail() {
       )}
 
       <p className="section-title">Add Part</p>
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
-        <button className="btn btn-ghost" onClick={handleCarPartSearch}>🔍 Search car-part.com</button>
-        {templateKey && (
-          <button className="btn btn-ghost" onClick={handleLoadTemplate} disabled={loadingTemplate}>
-            {loadingTemplate ? 'Loading...' : `📋 Load ${templateKey} template`}
-          </button>
-        )}
-      </div>
+      <div style={{ marginBottom: '12px' }}>
+  <button className="btn btn-ghost" onClick={handleCarPartSearch}>🔍 Search car-part.com</button>
+    </div>
 
       <div className="card">
         <form onSubmit={handleAddPart}>
