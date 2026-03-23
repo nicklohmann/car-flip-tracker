@@ -33,14 +33,13 @@ router.post('/:car_id/parts', async (req, res) => {
     const result = await pool.query(
       `INSERT INTO parts (car_id, part_name, vendor, cost)
        VALUES ($1, $2, $3, $4) RETURNING *`,
-      [car_id, part_name, vendor, cost]
+      [car_id, part_name, vendor, (cost === '' || cost === undefined) ? null : cost]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 // DELETE a part
 router.delete('/:car_id/parts/:part_id', async (req, res) => {
   try {
