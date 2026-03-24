@@ -35,7 +35,7 @@ function CarList() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1 className="page-title">Car Flip <span>Tracker</span></h1>
+        <h1 className="page-title">Craig's <span>Garage</span></h1>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <button className="btn btn-ghost" onClick={() => navigate('/dashboard')}>📊 Dashboard</button>
           {isLoggedIn ? (
