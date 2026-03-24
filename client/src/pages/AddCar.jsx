@@ -15,6 +15,21 @@ function AddCar() {
     actual_bid: '', iaa_cost: ''
   })
 
+  const [conditions, setConditions] = useState({
+    notRunning: false,
+    needsTires: false,
+    airbagDeployed: false,
+    numAirbags: 1,
+    needsOilChange: false,
+  })
+
+  const conditionAddonCost = (
+    (conditions.notRunning ? 125 : 0) +
+    (conditions.needsTires ? 500 : 0) +
+    (conditions.airbagDeployed ? 250 + (conditions.numAirbags * 100) : 0) +
+    (conditions.needsOilChange ? 50 : 0)
+  )
+
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
@@ -43,17 +58,21 @@ function AddCar() {
 
   const handleSubmit = e => {
     e.preventDefault()
-    api.post('/api/cars', form)
+    const totalRepair = (parseFloat(form.repair_estimate) || 0) + conditionAddonCost
+    api.post('/api/cars', { ...form, repair_estimate: totalRepair })
       .then(() => navigate('/'))
       .catch(err => console.error(err))
   }
 
+  const baseRepair = parseFloat(form.repair_estimate) || 0
+  const totalRepairEstimate = baseRepair + conditionAddonCost
+
   const targetSellPrice = form.kbb_trade_in ? (form.kbb_trade_in * 0.95).toFixed(2) : null
-  const totalCost = form.iaa_cost && form.repair_estimate && form.contingency
-    ? (parseFloat(form.iaa_cost) + parseFloat(form.repair_estimate) + parseFloat(form.contingency)).toFixed(2)
+  const totalCost = form.iaa_cost && form.contingency
+    ? (parseFloat(form.iaa_cost) + totalRepairEstimate + parseFloat(form.contingency)).toFixed(2)
     : null
-  const maxBid = form.kbb_trade_in && form.repair_estimate && form.contingency && form.iaa_fees && form.tax_reg_insurance
-    ? (form.kbb_trade_in * 0.95 - parseFloat(form.repair_estimate) - parseFloat(form.contingency) - parseFloat(form.iaa_fees) - parseFloat(form.tax_reg_insurance)).toFixed(2)
+  const maxBid = form.kbb_trade_in && form.contingency && form.iaa_fees && form.tax_reg_insurance
+    ? (form.kbb_trade_in * 0.95 - totalRepairEstimate - parseFloat(form.contingency) - parseFloat(form.iaa_fees) - parseFloat(form.tax_reg_insurance)).toFixed(2)
     : null
 
   return (
@@ -75,11 +94,7 @@ function AddCar() {
             onChange={e => setVinInput(e.target.value)}
           />
         </div>
-        <button
-          className="btn btn-primary"
-          onClick={handleDecodeVin}
-          disabled={decoding}
-        >
+        <button className="btn btn-primary" onClick={handleDecodeVin} disabled={decoding}>
           {decoding ? 'Decoding...' : 'Decode VIN'}
         </button>
       </div>
@@ -131,6 +146,91 @@ function AddCar() {
           </div>
         </div>
 
+        {/* Condition Flags */}
+        <p className="section-title">Condition</p>
+        <div className="card">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={conditions.notRunning}
+                onChange={e => setConditions({ ...conditions, notRunning: e.target.checked })}
+                style={{ width: '16px', height: '16px', accentColor: 'var(--accent)' }}
+              />
+              <span>
+                <span style={{ fontWeight: 600 }}>Not Running</span>
+                <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginLeft: '8px' }}>+$125 (battery)</span>
+              </span>
+            </label>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={conditions.needsTires}
+                onChange={e => setConditions({ ...conditions, needsTires: e.target.checked })}
+                style={{ width: '16px', height: '16px', accentColor: 'var(--accent)' }}
+              />
+              <span>
+                <span style={{ fontWeight: 600 }}>Needs New Tires</span>
+                <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginLeft: '8px' }}>+$500</span>
+              </span>
+            </label>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={conditions.needsOilChange}
+                onChange={e => setConditions({ ...conditions, needsOilChange: e.target.checked })}
+                style={{ width: '16px', height: '16px', accentColor: 'var(--accent)' }}
+              />
+              <span>
+                <span style={{ fontWeight: 600 }}>Needs Oil/Fluids</span>
+                <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginLeft: '8px' }}>+$50</span>
+              </span>
+            </label>
+
+            <div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={conditions.airbagDeployed}
+                  onChange={e => setConditions({ ...conditions, airbagDeployed: e.target.checked })}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--accent)' }}
+                />
+                <span>
+                  <span style={{ fontWeight: 600 }}>Airbags Deployed</span>
+                  <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginLeft: '8px' }}>+$250 reset, +$100/airbag</span>
+                </span>
+              </label>
+              {conditions.airbagDeployed && (
+                <div style={{ marginTop: '10px', marginLeft: '28px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <label className="form-label" style={{ marginBottom: 0 }}>How many airbags?</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={conditions.numAirbags}
+                    onChange={e => setConditions({ ...conditions, numAirbags: parseInt(e.target.value) || 1 })}
+                    style={{ width: '80px' }}
+                  />
+                  <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>
+                    = ${250 + (conditions.numAirbags * 100)} total
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {conditionAddonCost > 0 && (
+            <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Condition Add-ons</span>
+              <span style={{ fontFamily: 'Share Tech Mono, monospace', color: 'var(--accent)', fontSize: '1.1rem' }}>+${conditionAddonCost}</span>
+            </div>
+          )}
+        </div>
+
         {/* Valuation */}
         <p className="section-title">Valuation</p>
         <div className="card">
@@ -157,6 +257,11 @@ function AddCar() {
             <div className="form-group">
               <label className="form-label">Repair Estimate</label>
               <input className="form-input" name="repair_estimate" placeholder="0.00" type="number" onChange={handleChange} />
+              {conditionAddonCost > 0 && (
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '4px' }}>
+                  + ${conditionAddonCost} condition add-ons = <span style={{ color: 'var(--accent)' }}>${totalRepairEstimate} total</span>
+                </div>
+              )}
             </div>
             <div className="form-group">
               <label className="form-label">Contingency Buffer</label>

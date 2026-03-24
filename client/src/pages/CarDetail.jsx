@@ -3,13 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom'
 import api from '../api'
 import { useAuth } from '../AuthContext'
 
-
 function CarDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { isLoggedIn } = useAuth()
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState({})
+  const [editConditions, setEditConditions] = useState({
+    notRunning: false, needsTires: false, airbagDeployed: false, numAirbags: 1, needsOilChange: false
+  })
   const [car, setCar] = useState(null)
   const [parts, setParts] = useState([])
   const [newPart, setNewPart] = useState({ part_name: '', vendor: '', cost: '' })
@@ -81,13 +83,10 @@ function CarDetail() {
     setEstimating(false)
   }
 
- const handleCarPartSearch = () => {
-  const query = `${car.year} ${car.make} ${car.model}`
-  window.open(
-    `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}&_sacat=6030`,
-    '_blank'
-  )
-}
+  const handleCarPartSearch = () => {
+    const query = `${car.year} ${car.make} ${car.model}`
+    window.open(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}&_sacat=6030`, '_blank')
+  }
 
   const handleEditStart = () => {
     setEditForm({
@@ -101,12 +100,22 @@ function CarDetail() {
       tax_reg_insurance: car.tax_reg_insurance ?? '', actual_bid: car.actual_bid ?? '',
       iaa_cost: car.iaa_cost ?? '', notes: car.notes ?? ''
     })
+    setEditConditions({ notRunning: false, needsTires: false, airbagDeployed: false, numAirbags: 1, needsOilChange: false })
     setEditing(true)
   }
 
+  const conditionAddonCost = (
+    (editConditions.notRunning ? 125 : 0) +
+    (editConditions.needsTires ? 500 : 0) +
+    (editConditions.airbagDeployed ? 250 + (editConditions.numAirbags * 100) : 0) +
+    (editConditions.needsOilChange ? 50 : 0)
+  )
+
   const handleEditSave = async () => {
     try {
-      const res = await api.put(`/api/cars/${id}`, editForm)
+      const baseRepair = parseFloat(editForm.repair_estimate) || 0
+      const totalRepair = baseRepair + conditionAddonCost
+      const res = await api.put(`/api/cars/${id}`, { ...editForm, repair_estimate: totalRepair })
       setCar(res.data); setEditing(false)
     } catch (err) { console.error(err); alert('Failed to save changes') }
   }
@@ -125,16 +134,16 @@ function CarDetail() {
         <h1 className="page-title">{car.year} {car.make} <span>{car.model}</span></h1>
         <div style={{ display: 'flex', gap: '10px' }}>
           {editing ? (
-  <>
-    <button className="btn btn-primary" onClick={handleEditSave}>Save Changes</button>
-    <button className="btn btn-ghost" onClick={() => setEditing(false)}>Cancel</button>
-  </>
-) : (
-  <>
-    {isLoggedIn && <button className="btn btn-ghost" onClick={handleEditStart}>Edit</button>}
-    <button className="btn btn-ghost" onClick={() => navigate('/')}>← Back</button>
-  </>
-)}
+            <>
+              <button className="btn btn-primary" onClick={handleEditSave}>Save Changes</button>
+              <button className="btn btn-ghost" onClick={() => setEditing(false)}>Cancel</button>
+            </>
+          ) : (
+            <>
+              {isLoggedIn && <button className="btn btn-ghost" onClick={handleEditStart}>Edit</button>}
+              <button className="btn btn-ghost" onClick={() => navigate('/')}>← Back</button>
+            </>
+          )}
         </div>
       </div>
 
@@ -181,7 +190,15 @@ function CarDetail() {
               <div className="form-group"><label className="form-label">Mileage</label><input className="form-input" type="number" value={editForm.mileage} onChange={e => setEditForm({...editForm, mileage: e.target.value})} /></div>
               <div className="form-group"><label className="form-label">KBB Trade-In</label><input className="form-input" type="number" value={editForm.kbb_trade_in} onChange={e => setEditForm({...editForm, kbb_trade_in: e.target.value})} /></div>
               <div className="form-group"><label className="form-label">KBB Private</label><input className="form-input" type="number" value={editForm.kbb_private} onChange={e => setEditForm({...editForm, kbb_private: e.target.value})} /></div>
-              <div className="form-group"><label className="form-label">Repair Estimate</label><input className="form-input" type="number" value={editForm.repair_estimate} onChange={e => setEditForm({...editForm, repair_estimate: e.target.value})} /></div>
+              <div className="form-group">
+                <label className="form-label">Repair Estimate</label>
+                <input className="form-input" type="number" value={editForm.repair_estimate} onChange={e => setEditForm({...editForm, repair_estimate: e.target.value})} />
+                {conditionAddonCost > 0 && (
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '4px' }}>
+                    + ${conditionAddonCost} condition add-ons = <span style={{ color: 'var(--accent)' }}>${(parseFloat(editForm.repair_estimate) || 0) + conditionAddonCost} total</span>
+                  </div>
+                )}
+              </div>
               <div className="form-group"><label className="form-label">Contingency</label><input className="form-input" type="number" value={editForm.contingency} onChange={e => setEditForm({...editForm, contingency: e.target.value})} /></div>
               <div className="form-group">
                 <label className="form-label">Actual Bid</label>
@@ -208,6 +225,72 @@ function CarDetail() {
                 onChange={e => setEditForm({...editForm, notes: e.target.value})}
                 placeholder="e.g. ask for hinges, insurance quality..." style={{ resize: 'vertical' }} />
             </div>
+          </div>
+
+          <p className="section-title">Condition Add-ons</p>
+          <div className="card">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                <input type="checkbox" checked={editConditions.notRunning}
+                  onChange={e => setEditConditions({ ...editConditions, notRunning: e.target.checked })}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--accent)' }} />
+                <span>
+                  <span style={{ fontWeight: 600 }}>Not Running</span>
+                  <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginLeft: '8px' }}>+$125 (battery)</span>
+                </span>
+              </label>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                <input type="checkbox" checked={editConditions.needsTires}
+                  onChange={e => setEditConditions({ ...editConditions, needsTires: e.target.checked })}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--accent)' }} />
+                <span>
+                  <span style={{ fontWeight: 600 }}>Needs New Tires</span>
+                  <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginLeft: '8px' }}>+$500</span>
+                </span>
+              </label>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                <input type="checkbox" checked={editConditions.needsOilChange}
+                  onChange={e => setEditConditions({ ...editConditions, needsOilChange: e.target.checked })}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--accent)' }} />
+                <span>
+                  <span style={{ fontWeight: 600 }}>Needs Oil/Fluids</span>
+                  <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginLeft: '8px' }}>+$50</span>
+                </span>
+              </label>
+
+              <div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={editConditions.airbagDeployed}
+                    onChange={e => setEditConditions({ ...editConditions, airbagDeployed: e.target.checked })}
+                    style={{ width: '16px', height: '16px', accentColor: 'var(--accent)' }} />
+                  <span>
+                    <span style={{ fontWeight: 600 }}>Airbags Deployed</span>
+                    <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginLeft: '8px' }}>+$250 reset, +$100/airbag</span>
+                  </span>
+                </label>
+                {editConditions.airbagDeployed && (
+                  <div style={{ marginTop: '10px', marginLeft: '28px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <label className="form-label" style={{ marginBottom: 0 }}>How many airbags?</label>
+                    <input className="form-input" type="number" min="1" max="10"
+                      value={editConditions.numAirbags}
+                      onChange={e => setEditConditions({ ...editConditions, numAirbags: parseInt(e.target.value) || 1 })}
+                      style={{ width: '80px' }} />
+                    <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>
+                      = ${250 + (editConditions.numAirbags * 100)} total
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {conditionAddonCost > 0 && (
+              <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Condition Add-ons</span>
+                <span style={{ fontFamily: 'Share Tech Mono, monospace', color: 'var(--accent)', fontSize: '1.1rem' }}>+${conditionAddonCost}</span>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -237,23 +320,23 @@ function CarDetail() {
             <thead><tr><th>Part</th><th>Vendor</th><th>Cost</th><th></th></tr></thead>
             <tbody>
               {parts.map(part => (
-  <tr key={part.id}>
-    <td>{part.part_name}</td>
-    <td style={{ color: 'var(--text-dim)' }}>{part.vendor}</td>
-    <td className="cost-cell">${parseFloat(part.cost || 0).toFixed(2)}</td>
-    <td style={{ display: 'flex', gap: '6px' }}>
-      <button
-        className="btn btn-ghost"
-        style={{ fontSize: '0.75rem', padding: '2px 8px' }}
-        onClick={() => window.open(
-  `https://www.google.com/search?q=${encodeURIComponent(`${car.year} ${car.make} ${car.model} ${part.part_name}`)}+site:car-part.com`,
-  '_blank'
-)}
-      >🔍</button>
-      <button className="btn btn-danger" onClick={() => handleDeletePart(part.id)}>Remove</button>
-    </td>
-  </tr>
-))}
+                <tr key={part.id}>
+                  <td>{part.part_name}</td>
+                  <td style={{ color: 'var(--text-dim)' }}>{part.vendor}</td>
+                  <td className="cost-cell">${parseFloat(part.cost || 0).toFixed(2)}</td>
+                  <td style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      className="btn btn-ghost"
+                      style={{ fontSize: '0.75rem', padding: '2px 8px' }}
+                      onClick={() => window.open(
+                        `https://www.google.com/search?q=${encodeURIComponent(`${car.year} ${car.make} ${car.model} ${part.part_name}`)}+site:car-part.com`,
+                        '_blank'
+                      )}
+                    >🔍</button>
+                    <button className="btn btn-danger" onClick={() => handleDeletePart(part.id)}>Remove</button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -261,8 +344,8 @@ function CarDetail() {
 
       <p className="section-title">Add Part</p>
       <div style={{ marginBottom: '12px' }}>
-  <button className="btn btn-ghost" onClick={handleCarPartSearch}>🔍  Search eBay Motors</button>
-    </div>
+        <button className="btn btn-ghost" onClick={handleCarPartSearch}>🔍 Search eBay Motors</button>
+      </div>
 
       <div className="card">
         <form onSubmit={handleAddPart}>
