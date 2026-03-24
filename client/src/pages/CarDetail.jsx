@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../api'
+import { useAuth } from '../AuthContext'
+const { isLoggedIn } = useAuth()
 
 function CarDetail() {
   const { id } = useParams()
@@ -122,16 +124,16 @@ function CarDetail() {
         <h1 className="page-title">{car.year} {car.make} <span>{car.model}</span></h1>
         <div style={{ display: 'flex', gap: '10px' }}>
           {editing ? (
-            <>
-              <button className="btn btn-primary" onClick={handleEditSave}>Save Changes</button>
-              <button className="btn btn-ghost" onClick={() => setEditing(false)}>Cancel</button>
-            </>
-          ) : (
-            <>
-              <button className="btn btn-ghost" onClick={handleEditStart}>Edit</button>
-              <button className="btn btn-ghost" onClick={() => navigate('/')}>← Back</button>
-            </>
-          )}
+  <>
+    <button className="btn btn-primary" onClick={handleEditSave}>Save Changes</button>
+    <button className="btn btn-ghost" onClick={() => setEditing(false)}>Cancel</button>
+  </>
+) : (
+  <>
+    {isLoggedIn && <button className="btn btn-ghost" onClick={handleEditStart}>Edit</button>}
+    <button className="btn btn-ghost" onClick={() => navigate('/')}>← Back</button>
+  </>
+)}
         </div>
       </div>
 
