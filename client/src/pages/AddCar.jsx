@@ -28,7 +28,7 @@ function AddCar() {
     (conditions.notRunning ? 125 : 0) +
     (conditions.needsTires ? 500 : 0) +
     (conditions.airbagDeployed ? 250 + (conditions.numAirbags * 100) : 0) +
-    (conditions.needsOilChange ? 50 : 0)
+    (conditions.needsOilChange ? 50 : 0) +
     (conditions.needsPaint ? 30 : 0)
   )
 
