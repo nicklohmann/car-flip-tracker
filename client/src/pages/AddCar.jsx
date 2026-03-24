@@ -21,6 +21,7 @@ function AddCar() {
     airbagDeployed: false,
     numAirbags: 1,
     needsOilChange: false,
+    needsPaint: false
   })
 
   const conditionAddonCost = (
@@ -28,6 +29,7 @@ function AddCar() {
     (conditions.needsTires ? 500 : 0) +
     (conditions.airbagDeployed ? 250 + (conditions.numAirbags * 100) : 0) +
     (conditions.needsOilChange ? 50 : 0)
+    (conditions.needsPaint ? 30 : 0)
   )
 
   const handleChange = e => {
@@ -176,6 +178,19 @@ function AddCar() {
                 <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginLeft: '8px' }}>+$500</span>
               </span>
             </label>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={conditions.needsPaint}
+                  onChange={e => setConditions({ ...conditions, needsPaint: e.target.checked })}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--accent)' }}
+                />
+                <span>
+                  <span style={{ fontWeight: 600 }}>Needs Paint</span>
+                  <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginLeft: '8px' }}>+$30</span>
+                </span>
+              </label>
 
             <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
               <input

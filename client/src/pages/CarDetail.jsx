@@ -10,7 +10,7 @@ function CarDetail() {
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState({})
   const [editConditions, setEditConditions] = useState({
-    notRunning: false, needsTires: false, airbagDeployed: false, numAirbags: 1, needsOilChange: false
+    notRunning: false, needsTires: false, airbagDeployed: false, numAirbags: 1, needsOilChange: false, needsPaint: false
   })
   const [car, setCar] = useState(null)
   const [parts, setParts] = useState([])
@@ -100,7 +100,7 @@ function CarDetail() {
       tax_reg_insurance: car.tax_reg_insurance ?? '', actual_bid: car.actual_bid ?? '',
       iaa_cost: car.iaa_cost ?? '', notes: car.notes ?? ''
     })
-    setEditConditions({ notRunning: false, needsTires: false, airbagDeployed: false, numAirbags: 1, needsOilChange: false })
+    setEditConditions({ notRunning: false, needsTires: false, airbagDeployed: false, numAirbags: 1, needsOilChange: false, needsPaint: false })
     setEditing(true)
   }
 
@@ -108,7 +108,8 @@ function CarDetail() {
     (editConditions.notRunning ? 125 : 0) +
     (editConditions.needsTires ? 500 : 0) +
     (editConditions.airbagDeployed ? 250 + (editConditions.numAirbags * 100) : 0) +
-    (editConditions.needsOilChange ? 50 : 0)
+    (editConditions.needsOilChange ? 50 : 0) +
+    (editConditions.needsPaint ? 30 : 0)
   )
 
   const handleEditSave = async () => {
@@ -184,22 +185,22 @@ function CarDetail() {
           <p className="section-title">Edit Car Info</p>
           <div className="card">
             <div className="form-grid">
-              <div className="form-group"><label className="form-label">Make</label><input className="form-input" value={editForm.make} onChange={e => setEditForm({...editForm, make: e.target.value})} /></div>
-              <div className="form-group"><label className="form-label">Model</label><input className="form-input" value={editForm.model} onChange={e => setEditForm({...editForm, model: e.target.value})} /></div>
-              <div className="form-group"><label className="form-label">Year</label><input className="form-input" type="number" value={editForm.year} onChange={e => setEditForm({...editForm, year: e.target.value})} /></div>
-              <div className="form-group"><label className="form-label">Mileage</label><input className="form-input" type="number" value={editForm.mileage} onChange={e => setEditForm({...editForm, mileage: e.target.value})} /></div>
-              <div className="form-group"><label className="form-label">KBB Trade-In</label><input className="form-input" type="number" value={editForm.kbb_trade_in} onChange={e => setEditForm({...editForm, kbb_trade_in: e.target.value})} /></div>
-              <div className="form-group"><label className="form-label">KBB Private</label><input className="form-input" type="number" value={editForm.kbb_private} onChange={e => setEditForm({...editForm, kbb_private: e.target.value})} /></div>
+              <div className="form-group"><label className="form-label">Make</label><input className="form-input" value={editForm.make} onChange={e => setEditForm({ ...editForm, make: e.target.value })} /></div>
+              <div className="form-group"><label className="form-label">Model</label><input className="form-input" value={editForm.model} onChange={e => setEditForm({ ...editForm, model: e.target.value })} /></div>
+              <div className="form-group"><label className="form-label">Year</label><input className="form-input" type="number" value={editForm.year} onChange={e => setEditForm({ ...editForm, year: e.target.value })} /></div>
+              <div className="form-group"><label className="form-label">Mileage</label><input className="form-input" type="number" value={editForm.mileage} onChange={e => setEditForm({ ...editForm, mileage: e.target.value })} /></div>
+              <div className="form-group"><label className="form-label">KBB Trade-In</label><input className="form-input" type="number" value={editForm.kbb_trade_in} onChange={e => setEditForm({ ...editForm, kbb_trade_in: e.target.value })} /></div>
+              <div className="form-group"><label className="form-label">KBB Private</label><input className="form-input" type="number" value={editForm.kbb_private} onChange={e => setEditForm({ ...editForm, kbb_private: e.target.value })} /></div>
               <div className="form-group">
                 <label className="form-label">Repair Estimate</label>
-                <input className="form-input" type="number" value={editForm.repair_estimate} onChange={e => setEditForm({...editForm, repair_estimate: e.target.value})} />
+                <input className="form-input" type="number" value={editForm.repair_estimate} onChange={e => setEditForm({ ...editForm, repair_estimate: e.target.value })} />
                 {conditionAddonCost > 0 && (
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '4px' }}>
                     + ${conditionAddonCost} condition add-ons = <span style={{ color: 'var(--accent)' }}>${(parseFloat(editForm.repair_estimate) || 0) + conditionAddonCost} total</span>
                   </div>
                 )}
               </div>
-              <div className="form-group"><label className="form-label">Contingency</label><input className="form-input" type="number" value={editForm.contingency} onChange={e => setEditForm({...editForm, contingency: e.target.value})} /></div>
+              <div className="form-group"><label className="form-label">Contingency</label><input className="form-input" type="number" value={editForm.contingency} onChange={e => setEditForm({ ...editForm, contingency: e.target.value })} /></div>
               <div className="form-group">
                 <label className="form-label">Actual Bid</label>
                 <input className="form-input" type="number" value={editForm.actual_bid}
@@ -213,7 +214,7 @@ function CarDetail() {
               <div className="form-group"><label className="form-label">Total IAA Cost (auto-calculated)</label><input className="form-input" type="number" value={editForm.iaa_cost} readOnly style={{ opacity: 0.6, cursor: 'not-allowed' }} /></div>
               <div className="form-group">
                 <label className="form-label">Drivetrain</label>
-                <select className="form-select" value={editForm.drivetrain} onChange={e => setEditForm({...editForm, drivetrain: e.target.value})}>
+                <select className="form-select" value={editForm.drivetrain} onChange={e => setEditForm({ ...editForm, drivetrain: e.target.value })}>
                   <option value="AWD">AWD</option>
                   <option value="FWD">FWD</option>
                 </select>
@@ -222,7 +223,7 @@ function CarDetail() {
             <div className="form-group" style={{ marginTop: '12px' }}>
               <label className="form-label">Notes</label>
               <textarea className="form-input" rows={3} value={editForm.notes}
-                onChange={e => setEditForm({...editForm, notes: e.target.value})}
+                onChange={e => setEditForm({ ...editForm, notes: e.target.value })}
                 placeholder="e.g. ask for hinges, insurance quality..." style={{ resize: 'vertical' }} />
             </div>
           </div>
@@ -250,6 +251,19 @@ function CarDetail() {
                 </span>
               </label>
 
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={editConditions.needsPaint}
+                  onChange={e => setEditConditions({ ...editConditions, needsPaint: e.target.checked })}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--accent)' }}
+                />
+                <span>
+                  <span style={{ fontWeight: 600 }}>Needs Paint</span>
+                  <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginLeft: '8px' }}>+$30 (spray can)</span>
+                </span>
+              </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                 <input type="checkbox" checked={editConditions.needsOilChange}
                   onChange={e => setEditConditions({ ...editConditions, needsOilChange: e.target.checked })}
