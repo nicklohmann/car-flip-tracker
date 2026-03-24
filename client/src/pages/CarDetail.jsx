@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../api'
 import { useAuth } from '../AuthContext'
-const { isLoggedIn } = useAuth()
+
 
 function CarDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { isLoggedIn } = useAuth()
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState({})
   const [car, setCar] = useState(null)
