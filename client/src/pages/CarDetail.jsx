@@ -121,6 +121,18 @@ function CarDetail() {
     } catch (err) { console.error(err); alert('Failed to save changes') }
   }
 
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this car? This cannot be undone.')) return
+    try {
+      await api.delete(`/api/cars/${id}`)
+      navigate('/')
+    } catch (err) {
+      console.error(err)
+      alert('Failed to delete car')
+    }
+  }
+
+
   if (!car) return <div className="page"><p style={{ color: 'var(--text-dim)' }}>Loading...</p></div>
 
   const totalPartsCost = parts.reduce((sum, p) => sum + parseFloat(p.cost || 0), 0)
@@ -371,6 +383,13 @@ function CarDetail() {
           <button type="submit" className="btn btn-primary">Add Part</button>
         </form>
       </div>
+      {isLoggedIn && (
+        <div style={{ marginTop: '48px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
+          <button className="btn btn-danger" onClick={handleDelete}>
+            🗑 Delete this car
+          </button>
+        </div>
+      )}
     </div>
   )
 }
